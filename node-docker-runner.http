@@ -1,0 +1,106 @@
+# node-docker-runner accesses docker
+#
+
+@daprPort = 3500
+
+# starts node-docker-runner.js
+
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-dapr-runner/method/run HTTP/1.1
+Content-Type: application/json
+
+{
+    "data": {
+        "appId": "node-docker-runner",
+        "appPort": 0,
+        "command": "node node-docker-runner.js"
+    }
+}
+
+
+###
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-docker-runner/method/list HTTP/1.1
+Content-Type: application/json
+
+### runs pg-dev
+
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-docker-runner/method/run HTTP/1.1
+Content-Type: application/json
+
+{
+    "data": {
+        "names": "pg-dev",
+        "image": "pg-dev",
+
+        "ports": [
+            "5432:5432",
+            "8000:80"
+        ],
+        "volumes": [
+            "c:\\tmp:/work",
+            "c:\\tmp\\.data\\pg-dev:/var/lib/postgresql/data"
+        ],
+        "envs": [
+            "POSTGRES_PASSWORD=rei"
+        ],
+        "args": [
+            ["-c", "shared_preload_libraries=pg_cron,pg_partman_bgw"],
+            ["-c", "cron.database_name=postgres"],
+            ["-c", "cron.pg_partman_bgw.dbname=postgres"]
+        ]
+    }
+}
+
+### runs uvicorn
+
+@command = docker exec -w / pg-dev uvicorn dev:app --host=0.0.0.0 --port=80
+
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-dapr-runner/method/run HTTP/1.1
+Content-Type: application/json
+
+{
+    "data": {
+        "appId": "pg-dev-uvicorn",
+        "appPort": 8000,
+        "command": "{{command}}"
+    }
+}
+
+
+###
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-dapr-runner/method/list HTTP/1.1
+Content-Type: application/json
+
+
+### test invoke
+
+POST http://localhost:{{daprPort}}/v1.0/invoke/pg-dev-uvicorn/method/echo HTTP/1.1
+Content-Type: application/json
+
+{
+    "data": {
+        "hello": "test"
+    }
+}
+
+###
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-dapr-runner/method/stop HTTP/1.1
+Content-Type: application/json
+
+{
+    "data" : {
+        "appId": "pg-dev-uvicorn"
+    }
+}
+
+
+
+###
+# stops app
+POST http://localhost:3500/v1.0/invoke/node-docker-runner/method/stop HTTP/1.1
+Content-Type: application/json
+
+{
+    "data" : {
+        "names": "pg-dev"
+    }
+}

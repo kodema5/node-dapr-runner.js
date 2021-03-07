@@ -1,0 +1,51 @@
+# node-dapr-runner access dapr
+#
+
+@daprPort = 3500
+
+###
+# to list dapr instances
+
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-dapr-runner/method/list HTTP/1.1
+Content-Type: application/json
+
+
+###
+# starts node-docker-runner.js
+
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-dapr-runner/method/run HTTP/1.1
+Content-Type: application/json
+
+{
+    "data": {
+        "appId": "node-docker-runner",
+        "appPort": 0,
+        "command": "node node-docker-runner.js"
+    }
+}
+
+
+####
+# test docker runner
+#
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-docker-runner/method/hello HTTP/1.1
+Content-Type: application/json
+
+
+
+
+###
+# stops app
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-dapr-runner/method/stop HTTP/1.1
+Content-Type: application/json
+
+{
+    "data": {
+        "appId": "node-docker-runner"
+    }
+}
+
+###
+
+POST http://localhost:{{daprPort}}/v1.0/invoke/node-dapr-runner/method/list HTTP/1.1
+Content-Type: application/json
